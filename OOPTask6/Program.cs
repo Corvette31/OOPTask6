@@ -16,8 +16,9 @@ namespace OOPTask6
             {            
                 Console.WriteLine("Доступные команды:\n1-Посмотреть товары продавца\n2-Посмотреть свои товары\n3-Купить товары\n4-Выйти");
                 Console.Write("Введите команду: ");
+                string userInput = Console.ReadLine();
 
-                switch (Console.ReadLine())
+                switch (userInput)
                 {
                     case "1":
                         seller.ShowProducts();
@@ -43,12 +44,12 @@ namespace OOPTask6
     abstract class Inventory
     {
         public float Money { get; private set; }
-        protected Random _random = new Random();
-        protected Dictionary<Product, int> _products;
+        protected Random Random = new Random();
+        protected Dictionary<Product, int> Rroducts;
 
         public void ShowProducts()
         {
-            foreach (var product in _products)
+            foreach (var product in Rroducts)
             {
                 product.Key.ShowInfo();
                 Console.Write($" Количество товара - {product.Value}\n");
@@ -58,7 +59,7 @@ namespace OOPTask6
 
         public Product GetProduct(int articleNumber)
         {
-            foreach (var product in _products)
+            foreach (var product in Rroducts)
             {
                 if (product.Key.ArticleNumber == articleNumber)
                 {
@@ -68,16 +69,7 @@ namespace OOPTask6
 
             Console.WriteLine("Товар не найден");
             return null;
-        }
-        public bool IsCanBuy(Product product, int number)
-        {
-            return Money >= product.Price * number;
-        }
-
-        public bool IsCanSell(Product product, int number)
-        {
-            return _products[product] >= number;
-        }
+        }   
 
         protected void SetMoney(float money)
         {
@@ -94,30 +86,12 @@ namespace OOPTask6
             Money -= money;
         }
 
-        protected void Sell(Product product, int number)
-        {
-            _products[product] -= number;
-            Money += product.Price * number;
-        }
-
-        protected void Buy(Product product, int number)
-        {
-            if (_products.ContainsKey(product))
-            {
-                _products[product] += number;
-            } 
-            else
-            {
-                _products.Add(product, number);
-            }
-            Money -= product.Price * number;
-        }     
-
         protected int GetNuber()
         {
             int number;
+            string userInput = Console.ReadLine();
 
-            if (int.TryParse(Console.ReadLine(), out number) == false)
+            if (int.TryParse(userInput, out number) == false)
             {
                 Console.WriteLine("Не корректное значение!");
             }
@@ -154,17 +128,23 @@ namespace OOPTask6
             int maxProductCount = 10;
             int naxPrice = 1000;
             _nextArticleNumber = 0;
-            _products = new Dictionary<Product, int>();
-            _products.Add(new Product("Хлеб", _random.Next(naxPrice), ++_nextArticleNumber), _random.Next(maxProductCount));
-            _products.Add(new Product("Колбаса", _random.Next(naxPrice), ++_nextArticleNumber), _random.Next(maxProductCount));
-            _products.Add(new Product("Молоко", _random.Next(naxPrice), ++_nextArticleNumber), _random.Next(maxProductCount));
-            _products.Add(new Product("Сыр", _random.Next(naxPrice), ++_nextArticleNumber), _random.Next(maxProductCount));
-            _products.Add(new Product("Масло", _random.Next(naxPrice), ++_nextArticleNumber), _random.Next(maxProductCount));
+            Rroducts = new Dictionary<Product, int>();
+            Rroducts.Add(new Product("Хлеб", Random.Next(naxPrice), ++_nextArticleNumber), Random.Next(maxProductCount));
+            Rroducts.Add(new Product("Колбаса", Random.Next(naxPrice), ++_nextArticleNumber), Random.Next(maxProductCount));
+            Rroducts.Add(new Product("Молоко", Random.Next(naxPrice), ++_nextArticleNumber), Random.Next(maxProductCount));
+            Rroducts.Add(new Product("Сыр", Random.Next(naxPrice), ++_nextArticleNumber), Random.Next(maxProductCount));
+            Rroducts.Add(new Product("Масло", Random.Next(naxPrice), ++_nextArticleNumber), Random.Next(maxProductCount));
         }
 
-        public void SellProduct(Product product, int number)
+        public bool IsCanSell(Product product, int number)
         {
-            Sell(product, number);
+            return Rroducts[product] >= number;
+        }
+
+        public void Sell(Product product, int number)
+        {
+            Rroducts[product] -= number;
+            AddMoney(product.Price * number);
         }
     }
 
@@ -172,14 +152,28 @@ namespace OOPTask6
     {   
         public Player()
         {
-            _products = new Dictionary<Product, int>();
+            Rroducts = new Dictionary<Product, int>();
             int maxMoney = 10000;
-            SetMoney(_random.Next(maxMoney));
+            SetMoney(Random.Next(maxMoney));
         }
 
-        public void BuyProduct(Product product, int count)
+        public bool IsCanBuy(Product product, int number)
         {
-            Buy(product, count);
+            return Money >= product.Price * number;
+        }
+
+        public void Buy(Product product, int number)
+        {
+            if (Rroducts.ContainsKey(product))
+            {
+                Rroducts[product] += number;
+            }
+            else
+            {
+                Rroducts.Add(product, number);
+            }
+
+            SubtractMoney(product.Price * number);
         }
     }
 
@@ -194,8 +188,8 @@ namespace OOPTask6
 
             if (player.IsCanBuy(product, number) && seller.IsCanSell(product, number))
             {
-                seller.SellProduct(product, number);
-                player.BuyProduct(product, number);
+                seller.Sell(product, number);
+                player.Buy(product, number);
                 Console.WriteLine("Сделка совершена");
             } 
             else
