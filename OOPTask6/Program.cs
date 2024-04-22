@@ -9,6 +9,7 @@ namespace OOPTask6
         private const string _viewPlayerProducts = "2";
         private const string _deal = "3";
         private const string _exit = "4";
+
         static void Main(string[] args)
         {
             bool isRun = true;
