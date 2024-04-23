@@ -5,35 +5,36 @@ namespace OOPTask6
 {
     internal class Program
     {
-        private const string _viewSellarProducts = "1";
-        private const string _viewPlayerProducts = "2";
-        private const string _deal = "3";
-        private const string _exit = "4";
+        private const string _commandViewSellarProducts = "1";
+        private const string _commandViewPlayerProducts = "2";
+        private const string _commanDdeal = "3";
+        private const string _commandExit = "4";
 
         static void Main(string[] args)
         {
             bool isRun = true;
             Player player = new Player();
             Seller seller = new Seller();
+            Shop shop = new Shop(seller, player);   
 
             while (isRun)
             {
-                Console.WriteLine("Доступные команды:\n1-Посмотреть товары продавца\n2-Посмотреть свои товары\n3-Купить товары\n4-Выйти");
+                Console.WriteLine($"Доступные команды:\n{_commandViewSellarProducts} Посмотреть товары продавца\n{_commandViewPlayerProducts} Посмотреть свои товары\n{_commanDdeal} Купить товары\n{_commandExit} Выйти");
                 Console.Write("Введите команду: ");
                 string userInput = Console.ReadLine();
 
                 switch (userInput)
                 {
-                    case _viewSellarProducts:
+                    case _commandViewSellarProducts:
                         seller.ShowInventory();
                         break;
-                    case _viewPlayerProducts:
+                    case _commandViewPlayerProducts:
                         player.ShowInventory();
                         break;
-                    case _deal:
-                        seller.Deal(player);
+                    case _commanDdeal:
+                        shop.Deal();
                         break;
-                    case _exit:
+                    case _commandExit:
                         isRun = false;
                         break;
                     default:
@@ -57,7 +58,7 @@ namespace OOPTask6
             _cells = new List<Cell>();
         }
 
-        public int Count { get { return _cells.Count; } }
+        public int Count => _cells.Count;
 
         public void Add(Product product, int count)
         {
@@ -81,7 +82,7 @@ namespace OOPTask6
             }
         }
 
-        public void TakeProduct(Product product, int count)
+        public void RemoveProduct(Product product, int count)
         {
             int itemIndex = GetIndexProduct(product);
 
@@ -112,7 +113,10 @@ namespace OOPTask6
         }
         public int GetProductCount(int productIndex)
         {
-            return _cells[productIndex].Count;
+            if (_cells.Count > 0 && productIndex < _cells.Count && productIndex >= 0)
+                return _cells[productIndex].Count;
+
+            return -1;
         }
         private int GetIndexProduct(Product product)
         {
@@ -170,7 +174,7 @@ namespace OOPTask6
     abstract class Human
     {
         protected int Money;
-        protected Inventory Inventory;
+        protected Inventory Inventory = new Inventory();
         protected Random Random = new Random();
 
         public void ShowInventory()
@@ -178,8 +182,102 @@ namespace OOPTask6
             Console.WriteLine($"Баланс: {Money}\n");
             Inventory.Show();
         }
+    }
 
-        protected int GetNuber()
+    class Seller : Human
+    {
+        public Seller()
+        {
+            Money = 0;
+            int maxProductPrice = 1000;
+            int minProductPrice = 50;
+            int maxCountProduct = 10;
+            int minCountProduct = 1;
+            Inventory.Add(new Product("Колбаса", Random.Next(minProductPrice, maxProductPrice)), Random.Next(minCountProduct, maxCountProduct));
+            Inventory.Add(new Product("Мясо", Random.Next(minProductPrice, maxProductPrice)), Random.Next(minCountProduct, maxCountProduct));
+            Inventory.Add(new Product("Молоко", Random.Next(minProductPrice, maxProductPrice)), Random.Next(minCountProduct, maxCountProduct));
+            Inventory.Add(new Product("Сыр", Random.Next(minProductPrice, maxProductPrice)), Random.Next(minCountProduct, maxCountProduct));
+            Inventory.Add(new Product("Хлеб", Random.Next(minProductPrice, maxProductPrice)), Random.Next(minCountProduct, maxCountProduct));
+        }
+
+        public bool CanSell(int productIndex, int count)
+        {
+            return Inventory.GetProductCount(productIndex) >= count && count > 0;
+        }
+
+        public void Sell(int productIndex, int count)
+        {
+            Product product = Inventory.GetProduct(productIndex);
+            Inventory.RemoveProduct(product, count);
+            Money += product.Price * count;
+        }
+
+        public Product GetProduct(int productIndex)
+        {
+            return Inventory.GetProduct(productIndex);
+        }
+    }
+
+    class Player : Human
+    {
+        public Player()
+        {
+            int maxMoney = 3000;
+            int minMoney = 1000;
+            Money = Random.Next(minMoney, maxMoney);
+        }
+
+        public bool CanBuy(int Price, int count)
+        {
+            return Money >= Price * count;
+        }
+
+        public void Buy(Product product, int count)
+        {
+            Inventory.Add(product, count);
+            Money -= product.Price * count;
+        }
+    }
+
+    class Shop
+    {
+        private Seller _seller;
+        private Player _player;
+        public Shop(Seller seller, Player player)
+        {
+            _seller = seller;
+            _player = player;
+        }
+
+        public void Deal()
+        {
+            Console.WriteLine("Введите номер товара который хотите приобрести: ");
+            int productNumber = GetNuber();
+            Console.WriteLine("Введите количество товара: ");
+            int count = GetNuber();       
+
+            if (_seller.CanSell(productNumber, count))
+            {
+                Product product = _seller.GetProduct(productNumber);
+
+                if (_player.CanBuy(product.Price, count))
+                {
+                    _seller.Sell(productNumber, count);
+                    _player.Buy(product, count);
+                    Console.WriteLine("Сделка совершена!");
+                }
+                else
+                {
+                    Console.WriteLine("Не достаточно денег!");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Невозможно совершить сделку!");
+            }
+        }
+
+        private int GetNuber()
         {
             int number;
             string userInput = Console.ReadLine();
@@ -193,85 +291,4 @@ namespace OOPTask6
             return number;
         }
     }
-
-    class Seller : Human
-    {
-        public Seller()
-        {
-            Money = 0;
-            Inventory = new Inventory();
-            int maxProductPrice = 1000;
-            int minProductPrice = 50;
-            int maxCountProduct = 10;
-            int minCountProduct = 1;
-            Inventory.Add(new Product("Колбаса", Random.Next(minProductPrice, maxProductPrice)), Random.Next(minCountProduct, maxCountProduct));
-            Inventory.Add(new Product("Мясо", Random.Next(minProductPrice, maxProductPrice)), Random.Next(minCountProduct, maxCountProduct));
-            Inventory.Add(new Product("Молоко", Random.Next(minProductPrice, maxProductPrice)), Random.Next(minCountProduct, maxCountProduct));
-            Inventory.Add(new Product("Сыр", Random.Next(minProductPrice, maxProductPrice)), Random.Next(minCountProduct, maxCountProduct));
-            Inventory.Add(new Product("Хлеб", Random.Next(minProductPrice, maxProductPrice)), Random.Next(minCountProduct, maxCountProduct));
-        }
-
-        public void Deal(Player player)
-        {
-            Console.WriteLine("Введите номер товара который хотите приобрести: ");
-            int productNumber = GetNuber();
-
-            if (productNumber >= 0 && productNumber < Inventory.Count)
-            {
-                Product product = Inventory.GetProduct(productNumber);
-                Console.WriteLine("Введите количество товара: ");
-                int count = GetNuber();
-
-                if (count > 0)
-                {
-                    if (player.IsCanBuy(product, count) && IsCanSell(productNumber, count))
-                    {
-                        Inventory.TakeProduct(product, count);
-                        player.Buy(product, count);
-                        Money += product.Price * count;
-                        Console.WriteLine("Сделка совершена");
-                    }
-                    else
-                    {
-                        Console.WriteLine("Не достаточно денег!/Нет такова количества товара!");
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("Ошибка, не верное количество товара!");
-                }
-            }
-            else
-            {
-                Console.WriteLine("Ошибка, нет такова товара!");
-            }
-        }
-        private bool IsCanSell(int productIndex, int count)
-        {
-            return Inventory.GetProductCount(productIndex) >= count;
-        }
-    }
-
-    class Player : Human
-    {
-        public Player()
-        {
-            int maxMoney = 3000;
-            int minMoney = 1000;
-            Money = Random.Next(minMoney, maxMoney);
-            Inventory = new Inventory();
-        }
-
-        public bool IsCanBuy(Product product, int count)
-        {
-            return Money >= product.Price * count;
-        }
-
-        public void Buy(Product product, int count)
-        {
-            Inventory.Add(product, count);
-            Money -= product.Price * count;
-        }
-    }
-
 }
