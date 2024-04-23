@@ -7,7 +7,7 @@ namespace OOPTask6
     {
         private const string _commandViewSellarProducts = "1";
         private const string _commandViewPlayerProducts = "2";
-        private const string _commanDdeal = "3";
+        private const string _commandDdeal = "3";
         private const string _commandExit = "4";
 
         static void Main(string[] args)
@@ -31,7 +31,7 @@ namespace OOPTask6
                     case _commandViewPlayerProducts:
                         player.ShowInventory();
                         break;
-                    case _commanDdeal:
+                    case _commandDdeal:
                         shop.Deal();
                         break;
                     case _commandExit:
